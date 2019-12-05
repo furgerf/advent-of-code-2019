@@ -6,8 +6,6 @@ from argparse import ArgumentParser
 from importlib import import_module
 from time import time
 
-import numpy as np
-
 from day import Day
 
 
