@@ -20,6 +20,10 @@ class Day(ABC):
   def parse_data(self):
     pass
 
+  def parse_intcode_data(self):
+    assert len(self.raw_data) == 1
+    return [int(x) for x in self.raw_data[0].split(",")]
+
   @abstractmethod
   def part_1(self):
     pass
