@@ -14,9 +14,9 @@ class Day05(Day):
     return self.parse_intcode_data()
 
   def part_1(self):
-    intcode = Intcode(self.data[:])
-    intcode.compute([1], [])
+    intcode = Intcode(self.data[:], inputs=[1], verbose=True)
+    intcode.compute()
 
   def part_2(self):
-    intcode = Intcode(self.data[:])
-    intcode.compute([5], [])
+    intcode = Intcode(self.data[:], inputs=[5], verbose=True)
+    intcode.compute()

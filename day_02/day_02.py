@@ -19,7 +19,7 @@ class Day02(Day):
     data[2] = verb
     intcode = Intcode(data)
     intcode.compute()
-    return intcode.code[0]
+    return intcode._code[0]
 
   def part_1(self):
     print(Day02.intcode(self.data[:], 12, 2))

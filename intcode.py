@@ -16,8 +16,12 @@ class Intcode:
       99: 0
       }
 
-  def __init__(self, code):
-    self.code = code
+  def __init__(self, code, inputs=[], outputs=[], verbose=False):
+    self._code = code
+    self._inputs = inputs
+    self._outputs = outputs
+    self._verbose = verbose
+    self._cursor = 0
 
   @staticmethod
   def _parse_instruction(instruction):
@@ -35,13 +39,13 @@ class Intcode:
 
     return opcode, parameter_modes
 
-  def retrieve_parameters(self, cursor, parameter_modes):
+  def retrieve_parameters(self, parameter_modes):
     parameters = []
 
     for i, parameter_mode in enumerate(parameter_modes):
-      parameter_data = self.code[cursor+1+i]
+      parameter_data = self._code[self._cursor+1+i]
       if parameter_mode == 0: # position
-        parameters.append(self.code[parameter_data])
+        parameters.append(self._code[parameter_data])
       elif parameter_mode == 1: # immediate
         parameters.append(parameter_data)
       else:
@@ -49,52 +53,70 @@ class Intcode:
 
     return parameters
 
-  def compute(self, inputs=[], outputs=[]):
-    cursor = 0
-    while True:
-      instruction = self.code[cursor]
-      opcode, parameter_modes = Intcode._parse_instruction(instruction)
-      parameters = self.retrieve_parameters(cursor, parameter_modes)
+  def _process_instruction(self):
+    instruction = self._code[self._cursor]
+    opcode, parameter_modes = Intcode._parse_instruction(instruction)
+    parameters = self.retrieve_parameters(parameter_modes)
 
-      old_cursor = cursor
-      if opcode == 1: # add
-        assert parameter_modes[2] == 0, "always have positional destination"
-        self.code[self.code[cursor+3]] = parameters[0] + parameters[1]
-        cursor += 1 + len(parameters)
-      elif opcode == 2: # multiply
-        assert parameter_modes[2] == 0, "always have positional destination"
-        self.code[self.code[cursor+3]] = parameters[0] * parameters[1]
-        cursor += 1 + len(parameters)
-      elif opcode == 3: # input
-        assert parameter_modes[0] == 0, "always have positional destination"
-        print("Using input '{}'".format(inputs[0]))
-        self.code[self.code[cursor+1]] = inputs.pop(0)
-        cursor += 1 + len(parameters)
-      elif opcode == 4: # output
+    old_cursor = self._cursor
+    if opcode == 1: # add
+      assert parameter_modes[2] == 0, "always have positional destination"
+      self._code[self._code[self._cursor+3]] = parameters[0] + parameters[1]
+      self._cursor += 1 + len(parameters)
+    elif opcode == 2: # multiply
+      assert parameter_modes[2] == 0, "always have positional destination"
+      self._code[self._code[self._cursor+3]] = parameters[0] * parameters[1]
+      self._cursor += 1 + len(parameters)
+    elif opcode == 3: # input
+      assert parameter_modes[0] == 0, "always have positional destination"
+      if not self._inputs:
+        raise IOError("No input to process")
+      if self._verbose:
+        print("Using input '{}'".format(self._inputs[0]))
+      self._code[self._code[self._cursor+1]] = self._inputs.pop(0)
+      self._cursor += 1 + len(parameters)
+    elif opcode == 4: # output
+      if self._verbose:
         print("Adding output '{}'".format(parameters[0]))
-        outputs.append(parameters[0])
-        cursor += 1 + len(parameters)
-      elif opcode == 5: # jump if true
-        if parameters[0]:
-          cursor = parameters[1]
-        else:
-          cursor += 1 + len(parameters)
-      elif opcode == 6: # jump if false
-        if not parameters[0]:
-          cursor = parameters[1]
-        else:
-          cursor += 1 + len(parameters)
-      elif opcode == 7: # less than
-        assert parameter_modes[2] == 0, "always have positional destination"
-        self.code[self.code[cursor+3]] = int(parameters[0] < parameters[1])
-        cursor += 1 + len(parameters)
-      elif opcode == 8: # equals
-        assert parameter_modes[2] == 0, "always have positional destination"
-        self.code[self.code[cursor+3]] = int(parameters[0] == parameters[1])
-        cursor += 1 + len(parameters)
-      elif opcode == 99: # halt
-        break
+      self._outputs.append(parameters[0])
+      self._cursor += 1 + len(parameters)
+    elif opcode == 5: # jump if true
+      if parameters[0]:
+        self._cursor = parameters[1]
       else:
-        raise ValueError("Unknown opcode: {}".format(opcode))
+        self._cursor += 1 + len(parameters)
+    elif opcode == 6: # jump if false
+      if not parameters[0]:
+        self._cursor = parameters[1]
+      else:
+        self._cursor += 1 + len(parameters)
+    elif opcode == 7: # less than
+      assert parameter_modes[2] == 0, "always have positional destination"
+      self._code[self._code[self._cursor+3]] = int(parameters[0] < parameters[1])
+      self._cursor += 1 + len(parameters)
+    elif opcode == 8: # equals
+      assert parameter_modes[2] == 0, "always have positional destination"
+      self._code[self._code[self._cursor+3]] = int(parameters[0] == parameters[1])
+      self._cursor += 1 + len(parameters)
+    elif opcode == 99: # halt
+      self._cursor = None
+    else:
+      raise ValueError("Unknown opcode: {}".format(opcode))
 
-      assert cursor != old_cursor, "forgot to change cursor?"
+    assert self._cursor != old_cursor, "forgot to change cursor?"
+
+  def compute(self):
+    assert not self._cursor
+    while True:
+      self._process_instruction()
+      if self._cursor is None:
+        break
+
+  def partial_compute(self):
+    while True:
+      try:
+        self._process_instruction()
+        if self._cursor is None:
+          return True
+      except IOError:
+        return False
