@@ -64,7 +64,11 @@ class Day03(Day):
 
     distances = [x+y for x, y in intersections]
 
-    print(len(intersections), min(distances))
+    return min(distances)
+
+  @property
+  def part_1_solution(self):
+    return 1264
 
   def part_2(self):
     visited = {}
@@ -135,4 +139,8 @@ class Day03(Day):
         raise ValueError()
       travelled += length
 
-    print(len(distances), min(distances))
+    return min(distances)
+
+  @property
+  def part_2_solution(self):
+    return 37390

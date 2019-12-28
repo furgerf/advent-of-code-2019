@@ -22,12 +22,19 @@ class Day02(Day):
     return intcode._code[0]
 
   def part_1(self):
-    print(Day02.intcode(self.data[:], 12, 2))
+    return Day02.intcode(self.data[:], 12, 2)
+
+  @property
+  def part_1_solution(self):
+    return 4570637
 
   def part_2(self):
     target = 19690720
     for noun in range(100):
       for verb in range(100):
         if Day02.intcode(self.data[:], noun, verb) == target:
-          print(noun, verb, 100*noun+verb)
-          return
+          return 100*noun+verb
+
+  @property
+  def part_2_solution(self):
+    return 5485

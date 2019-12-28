@@ -28,6 +28,16 @@ class Day(ABC):
   def part_1(self):
     pass
 
+  @property
+  @abstractmethod
+  def part_1_solution(self):
+    pass
+
   @abstractmethod
   def part_2(self):
+    pass
+
+  @property
+  @abstractmethod
+  def part_2_solution(self):
     pass

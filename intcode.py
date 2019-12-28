@@ -23,6 +23,10 @@ class Intcode:
     self._verbose = verbose
     self._cursor = 0
 
+  @property
+  def outputs(self):
+    return self._outputs
+
   @staticmethod
   def _parse_instruction(instruction):
     instruction_str = str(instruction)

@@ -17,7 +17,11 @@ class Day01(Day):
 
   def part_1(self):
     fuel_costs = [Day01.calculate_fuel(weight) for weight in self.data]
-    print(sum(fuel_costs))
+    return sum(fuel_costs)
+
+  @property
+  def part_1_solution(self):
+    return 3423511
 
   def part_2(self):
     def recursive_calculate_fuel(weight, current_fuel_cost):
@@ -27,4 +31,8 @@ class Day01(Day):
       return recursive_calculate_fuel(new_fuel, current_fuel_cost + new_fuel)
 
     fuel_costs = [recursive_calculate_fuel(weight, 0) for weight in self.data]
-    print(sum(fuel_costs))
+    return sum(fuel_costs)
+
+  @property
+  def part_2_solution(self):
+    return 5132379

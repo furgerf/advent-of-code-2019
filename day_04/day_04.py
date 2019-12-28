@@ -16,7 +16,7 @@ class Day04(Day):
     for candidate in range(self.data[0], self.data[1]+1):
       if is_valid(candidate):
         possibilities += 1
-    print(possibilities)
+    return possibilities
 
   def part_1(self):
     def is_valid(candidate):
@@ -35,7 +35,11 @@ class Day04(Day):
           no_decrease = False
 
       return has_double_digit and no_decrease
-    self.count_possibilities(is_valid)
+    return self.count_possibilities(is_valid)
+
+  @property
+  def part_1_solution(self):
+    return 2150
 
   def part_2(self):
     def is_valid(candidate):
@@ -56,4 +60,8 @@ class Day04(Day):
           no_decrease = False
 
       return has_double_digit and no_decrease
-    self.count_possibilities(is_valid)
+    return self.count_possibilities(is_valid)
+
+  @property
+  def part_2_solution(self):
+    return 1462

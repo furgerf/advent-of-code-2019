@@ -31,14 +31,17 @@ class Day06(Day):
       return count + all_children, all_children + 1
 
     origin = "COM"
-    print(count_orbits(origin))
 
     def other_count_orbits(source, depth):
       if source not in direct_orbits:
         return 0
       return depth * len(direct_orbits[source]) + \
           sum([other_count_orbits(destination, depth+1) for destination in direct_orbits[source]])
-    print(other_count_orbits(origin, 1))
+    return other_count_orbits(origin, 1)
+
+  @property
+  def part_1_solution(self):
+    return 130681
 
   def part_2(self):
     reverse_orbits = {}
@@ -55,5 +58,9 @@ class Day06(Day):
 
     for i in range(min(len(my_path), len(santa_path))):
       if my_path[i] != santa_path[i]:
-        print(len(my_path[i:]) + len(santa_path[i:]))
-        break
+        return len(my_path[i:]) + len(santa_path[i:])
+    return None
+
+  @property
+  def part_2_solution(self):
+    return 313

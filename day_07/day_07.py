@@ -26,7 +26,11 @@ class Day07(Day):
       if outputs[-1] > max_output:
         max_output = outputs[-1]
 
-    print(max_output)
+    return max_output
+
+  @property
+  def part_1_solution(self):
+    return 914828
 
   def part_2(self):
     max_output = 0
@@ -42,4 +46,8 @@ class Day07(Day):
       if inputs[0][-1] > max_output:
         max_output = inputs[0][-1]
 
-    print(max_output)
+    return max_output
+
+  @property
+  def part_2_solution(self):
+    return 17956613

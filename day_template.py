@@ -14,5 +14,13 @@ class DayXXX(Day):
   def part_1(self):
     pass
 
+  @property
+  def part_1_solution(self):
+    pass
+
   def part_2(self):
+    pass
+
+  @property
+  def part_2_solution(self):
     pass
