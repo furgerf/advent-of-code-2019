@@ -4,6 +4,28 @@
 
 class Intcode:
 
+  class Parameter:
+
+    def __init__(self, index, value):
+      self._index = index
+      self._value = value
+
+    @property
+    def index(self):
+      if self._index is None:
+        raise RuntimeError()
+      return self._index
+
+    @property
+    def value(self):
+      return self._value
+
+    def __str__(self):
+      return "code[{}]={}".format(self._index, self._value)
+
+    def __repr__(self):
+      return self.__str__()
+
   OPCODE_PARAMETERS = {
       1: 3,
       2: 3,
@@ -13,15 +35,17 @@ class Intcode:
       6: 2,
       7: 3,
       8: 3,
+      9: 1,
       99: 0
       }
 
-  def __init__(self, code, inputs=[], outputs=[], verbose=False):
+  def __init__(self, code, inputs=None, outputs=None, verbose=False):
     self._code = code
-    self._inputs = inputs
-    self._outputs = outputs
+    self._inputs = inputs or []
+    self._outputs = outputs or []
     self._verbose = verbose
     self._cursor = 0
+    self._relative_base = 0
 
   @property
   def outputs(self):
@@ -43,15 +67,27 @@ class Intcode:
 
     return opcode, parameter_modes
 
+  def _ensure_sufficient_memory(self, required_index):
+    additional_memory = [0] * (required_index - len(self._code) + 1)
+    self._code.extend(additional_memory)
+    if self._verbose and additional_memory:
+      print("Adding {} cells of memory to {}".format(
+        len(additional_memory), len(self._code)))
+
   def retrieve_parameters(self, parameter_modes):
     parameters = []
 
     for i, parameter_mode in enumerate(parameter_modes):
       parameter_data = self._code[self._cursor+1+i]
       if parameter_mode == 0: # position
-        parameters.append(self._code[parameter_data])
+        self._ensure_sufficient_memory(parameter_data)
+        parameters.append(Intcode.Parameter(parameter_data, self._code[parameter_data]))
       elif parameter_mode == 1: # immediate
-        parameters.append(parameter_data)
+        parameters.append(Intcode.Parameter(None, parameter_data))
+      elif parameter_mode == 2: # relative
+        position = self._relative_base + parameter_data
+        self._ensure_sufficient_memory(position)
+        parameters.append(Intcode.Parameter(position, self._code[position]))
       else:
         raise ValueError("Unknown parameter mode: {}".format(parameter_mode))
 
@@ -63,45 +99,71 @@ class Intcode:
     parameters = self.retrieve_parameters(parameter_modes)
 
     old_cursor = self._cursor
+    if self._verbose:
+      print("  OP {}, modes {}, params {}".format(opcode, parameter_modes, parameters))
+
     if opcode == 1: # add
-      assert parameter_modes[2] == 0, "always have positional destination"
-      self._code[self._code[self._cursor+3]] = parameters[0] + parameters[1]
+      if self._verbose:
+        print("    Writing {}+{} to {}".format(
+          parameters[0].value, parameters[1].value, parameters[2].index))
+      self._code[parameters[2].index] = parameters[0].value + parameters[1].value
       self._cursor += 1 + len(parameters)
     elif opcode == 2: # multiply
-      assert parameter_modes[2] == 0, "always have positional destination"
-      self._code[self._code[self._cursor+3]] = parameters[0] * parameters[1]
+      self._ensure_sufficient_memory(self._code[self._cursor+3])
+      if self._verbose:
+        print("    Writing {}*{} to {}".format(
+          parameters[0].value, parameters[1].value, parameters[2].index))
+      self._code[parameters[2].index] = parameters[0].value * parameters[1].value
       self._cursor += 1 + len(parameters)
+
     elif opcode == 3: # input
-      assert parameter_modes[0] == 0, "always have positional destination"
       if not self._inputs:
         raise IOError("No input to process")
       if self._verbose:
-        print("Using input '{}'".format(self._inputs[0]))
-      self._code[self._code[self._cursor+1]] = self._inputs.pop(0)
+        print("    Writing input {} to {}".format(self._inputs[0], parameters[0].index))
+      self._ensure_sufficient_memory(parameters[0].index)
+      self._code[parameters[0].index] = self._inputs.pop(0)
       self._cursor += 1 + len(parameters)
     elif opcode == 4: # output
       if self._verbose:
-        print("Adding output '{}'".format(parameters[0]))
-      self._outputs.append(parameters[0])
+        print("    Adding output {}".format(parameters[0].value))
+      self._outputs.append(parameters[0].value)
       self._cursor += 1 + len(parameters)
+
     elif opcode == 5: # jump if true
-      if parameters[0]:
-        self._cursor = parameters[1]
+      if self._verbose:
+        print("    Jumping if {} to {}".format(parameters[0].value, parameters[1].value))
+      if parameters[0].value:
+        self._cursor = parameters[1].value
       else:
         self._cursor += 1 + len(parameters)
     elif opcode == 6: # jump if false
-      if not parameters[0]:
-        self._cursor = parameters[1]
+      if self._verbose:
+        print("    Jumping if NOT {} to {}".format(parameters[0].value, parameters[1].value))
+      if not parameters[0].value:
+        self._cursor = parameters[1].value
       else:
         self._cursor += 1 + len(parameters)
+
     elif opcode == 7: # less than
-      assert parameter_modes[2] == 0, "always have positional destination"
-      self._code[self._code[self._cursor+3]] = int(parameters[0] < parameters[1])
+      if self._verbose:
+        print("    Writing {}<{} to {}".format(
+          parameters[0].value, parameters[1].value, parameters[2].index))
+      self._code[parameters[2].index] = int(parameters[0].value < parameters[1].value)
       self._cursor += 1 + len(parameters)
     elif opcode == 8: # equals
-      assert parameter_modes[2] == 0, "always have positional destination"
-      self._code[self._code[self._cursor+3]] = int(parameters[0] == parameters[1])
+      if self._verbose:
+        print("    Writing {}=={} to {}".format(
+          parameters[0].value, parameters[1].value, parameters[2].index))
+      self._code[parameters[2].index] = int(parameters[0].value == parameters[1].value)
       self._cursor += 1 + len(parameters)
+
+    elif opcode == 9: # adjust relative base
+      if self._verbose:
+        print("    Adding {} to relative base".format(parameters[0].value))
+      self._relative_base += parameters[0].value
+      self._cursor += 1 + len(parameters)
+
     elif opcode == 99: # halt
       self._cursor = None
     else:
