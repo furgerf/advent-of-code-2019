@@ -37,7 +37,9 @@ def run_tests():
       tqdm.write("Part 2 of {} is not implemented!".format(day_class.__name__))
     else:
       assert day.part_2() == day.part_2_solution, "Part 2 is broken"
-    tqdm.write("{} is ok!".format(day_class.__name__))
+
+    if day.part_1_solution is not None and day.part_2_solution is not None:
+      tqdm.write("{} is ok!".format(day_class.__name__))
 
 def main():
   args = parse_arguments()

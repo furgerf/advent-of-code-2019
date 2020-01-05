@@ -51,6 +51,15 @@ class Intcode:
   def outputs(self):
     return self._outputs
 
+  def clear_output(self):
+    self._outputs = []
+
+  def add_input(self, new_input):
+    if isinstance(new_input, list):
+      self._inputs.extend(new_input)
+    else:
+      self._inputs.append(new_input)
+
   @staticmethod
   def _parse_instruction(instruction):
     instruction_str = str(instruction)
@@ -179,6 +188,12 @@ class Intcode:
         break
 
   def partial_compute(self):
+    """
+    Runs until a new input is required.
+
+    Returns:
+      True if the program halted and False if a new input is required.
+    """
     while True:
       try:
         self._process_instruction()
