@@ -54,6 +54,9 @@ class Intcode:
   def clear_output(self):
     self._outputs = []
 
+  def pop_output(self):
+    return self._outputs.pop(0)
+
   def add_input(self, new_input):
     if isinstance(new_input, list):
       self._inputs.extend(new_input)
