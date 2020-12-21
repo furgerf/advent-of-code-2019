@@ -29,17 +29,20 @@ def run_tests():
     import_module("{name}.{name}".format(name=directory))
   for day_class in tqdm(sorted(Day.__subclasses__(), key=lambda cls: cls.__name__)):
     day = day_class()
+    t0 = time()
     if day.part_1_solution is None:
       tqdm.write("Part 1 of {} is not implemented!".format(day_class.__name__))
     else:
       assert day.part_1() == day.part_1_solution, "Part 1 is broken"
+    t1 = time()
     if day.part_2_solution is None:
       tqdm.write("Part 2 of {} is not implemented!".format(day_class.__name__))
     else:
       assert day.part_2() == day.part_2_solution, "Part 2 is broken"
+    t2 = time()
 
     if day.part_1_solution is not None and day.part_2_solution is not None:
-      tqdm.write("{} is ok!".format(day_class.__name__))
+      tqdm.write("{} is ok! ({:.1f}s/{:.1f}s)".format(day_class.__name__, t1-t0, t2-t1))
 
 def main():
   args = parse_arguments()
